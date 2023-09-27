@@ -8,6 +8,30 @@
 #define ROADLINE_H 25
 #define FENCH_W 7 // Fench width in Pixel
 
+// Constants
+const int screenWidth = 600;
+const int screenHeight = 800;
+// Game states
+bool GAME_OVER = false;
+bool GAME_PAUSED = false;
+
+// A function to pause the game
+void pauseGame(Texture2D &pauseBtn)
+{
+    pauseBtn = LoadTexture("assets/play_btn.png");
+    GAME_PAUSED = true;
+}
+// Function to play the game
+void playGame(Texture2D &pauseBtn)
+{
+    pauseBtn = LoadTexture("assets/pause_btn.png");
+    GAME_PAUSED = false;
+}
+// Function to detect mouse hover on an image texture
+bool isTextureHovered(Rectangle rect)
+{
+    return CheckCollisionPointRec(GetMousePosition(), rect);
+}
 // Function to get the collision rectangle for a texture
 Rectangle GetTextureCollisionRect(Texture2D texture, Vector2 position)
 {
@@ -130,11 +154,7 @@ int main()
 {
     // Seed the random number generator
     std::srand(static_cast<unsigned>(std::time(nullptr)));
-    // Game states
-    bool GAME_OVER = false;
-    bool GAME_PAUSED = false;
-    const int screenWidth = 600;
-    const int screenHeight = 800;
+
     // Initializing The window
     InitWindow(screenWidth, screenHeight, "Raylib Rectangle");
     // Hiding window border
@@ -157,6 +177,9 @@ int main()
     Texture2D textureFench = LoadTexture("assets/fench.png");
     Texture2D playerCarTexture = LoadTexture("assets/Car.png");
     Texture2D boom = LoadTexture("assets/fire.png");
+    Texture2D pauseBtn = LoadTexture("assets/pause_btn.png");
+    float pauseBtnOffset[2] = {screenWidth - 10 - pauseBtn.width, 10};
+    Rectangle rectPauseBtn = {pauseBtnOffset[0], pauseBtnOffset[1], pauseBtn.width, pauseBtn.height};
     std::vector<float> laneDeploymentCoords = {140, 220, 300, 380, 460};
     float playerCarX = laneDeploymentCoords.at(2) - playerCarTexture.width / 2;
     float playerCarY = screenHeight - playerCarTexture.height;
@@ -495,6 +518,44 @@ int main()
                 GAME_OVER = true;
             }
         }
+        // Draw the pause button
+        DrawTexture(pauseBtn, pauseBtnOffset[0], pauseBtnOffset[1], WHITE);
+        // Binding click event on that button
+        if (GAME_PAUSED)
+        {
+            // Draw a text to display paused
+            const char *message = "Paused";
+            int fontSize = 40;
+            int textWidth = MeasureText(message, fontSize); // Measure the text width
+            int textHeight = fontSize;                      // Assuming single-line text
+            // Calculate the position to center the text both horizontally and vertically
+            int x = (screenWidth - textWidth) / 2;
+            int y = (screenHeight - textHeight) / 2;
+            Color textColor = WHITE;
+            DrawText("PAUSED", x, y, fontSize, textColor);
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isTextureHovered(rectPauseBtn))
+        {
+            if (!GAME_PAUSED)
+            {
+                pauseGame(pauseBtn);
+                // Draw a text to display paused
+                const char *message = "Paused";
+                int fontSize = 40;
+                int textWidth = MeasureText(message, fontSize); // Measure the text width
+                int textHeight = fontSize;                      // Assuming single-line text
+                // Calculate the position to center the text both horizontally and vertically
+                int x = (screenWidth - textWidth) / 2;
+                int y = (screenHeight - textHeight) / 2;
+                Color textColor = RED;
+                DrawText("Hello", 10, 200, fontSize, textColor);
+            }
+            else
+            {
+                playGame(pauseBtn);
+            }
+        }
 
         EndDrawing();
     }
@@ -505,6 +566,7 @@ int main()
     UnloadTexture(textureFench);
     UnloadTexture(playerCarTexture);
     UnloadTexture(boom);
+    UnloadTexture(pauseBtn);
     // De-Initialization
     CloseWindow();
 
