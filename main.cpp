@@ -1,4 +1,4 @@
-// TODO: Create UI and Scenes
+// TODO: Add score
 #include "raylib.h"
 #include <iostream>
 #include <vector>
@@ -14,6 +14,9 @@ const int screenHeight = 800;
 // Game states
 bool GAME_OVER = false;
 bool GAME_PAUSED = false;
+
+// Globals
+int score = 0;
 
 // A function to pause the game
 void pauseGame(Texture2D &pauseBtn)
@@ -178,12 +181,12 @@ int main()
     Texture2D playerCarTexture = LoadTexture("assets/Car.png");
     Texture2D boom = LoadTexture("assets/fire.png");
     Texture2D pauseBtn = LoadTexture("assets/pause_btn.png");
+    Texture2D scoreBoard = LoadTexture("assets/scoreboard.png");
     float pauseBtnOffset[2] = {screenWidth - 10 - pauseBtn.width, 10};
     Rectangle rectPauseBtn = {pauseBtnOffset[0], pauseBtnOffset[1], pauseBtn.width, pauseBtn.height};
     std::vector<float> laneDeploymentCoords = {140, 220, 300, 380, 460};
     float playerCarX = laneDeploymentCoords.at(2) - playerCarTexture.width / 2;
     float playerCarY = screenHeight - playerCarTexture.height;
-
     // Maximum a car can be moved
     float thresholdOffsets[2][2] = {
         // Left, right
@@ -495,6 +498,8 @@ int main()
             // Check if they outside view
             if (enemyCarYCoors.at(i) > screenHeight)
             {
+                // Increase the score first
+                score++;
                 // Get the smallest enemy car y coordinate
                 float leastY = findSmallestFloat(enemyCarYCoors);
                 // Generate a random diff in the same way as the generation loop
@@ -556,7 +561,12 @@ int main()
                 playGame(pauseBtn);
             }
         }
-
+        // Draw scoreboard
+        DrawTexture(scoreBoard, grass_border_width / 2 - scoreBoard.width / 2, 5, WHITE);
+        // Draw Score Text
+        std::string cppstring = "Score: " + std::to_string(score);
+        char *scoreDsp = &cppstring[0];
+        DrawText(scoreDsp, grass_border_width / 2 - MeasureText(scoreDsp, 12) / 2, 5 + scoreBoard.height / 2 - 12 / 2, 14, (Color){58, 21, 0, 255});
         EndDrawing();
     }
 
