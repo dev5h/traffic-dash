@@ -1,4 +1,4 @@
-// TODO: Recheck the algorithm
+// TODO: Create UI and Scenes
 #include "raylib.h"
 #include <iostream>
 #include <vector>
@@ -8,6 +8,16 @@
 #define ROADLINE_H 25
 #define FENCH_W 7 // Fench width in Pixel
 
+// Function to get the collision rectangle for a texture
+Rectangle GetTextureCollisionRect(Texture2D texture, Vector2 position)
+{
+    Rectangle collisionRect;
+    collisionRect.x = position.x;
+    collisionRect.y = position.y;
+    collisionRect.width = (float)texture.width;
+    collisionRect.height = (float)texture.height;
+    return collisionRect;
+}
 float findSmallestFloat(const std::vector<float> &numbers)
 {
     if (numbers.empty())
@@ -120,6 +130,9 @@ int main()
 {
     // Seed the random number generator
     std::srand(static_cast<unsigned>(std::time(nullptr)));
+    // Game states
+    bool GAME_OVER = false;
+    bool GAME_PAUSED = false;
     const int screenWidth = 600;
     const int screenHeight = 800;
     // Initializing The window
@@ -143,6 +156,7 @@ int main()
     Texture2D rightGrassTexture = LoadTexture("assets/grass.png");
     Texture2D textureFench = LoadTexture("assets/fench.png");
     Texture2D playerCarTexture = LoadTexture("assets/Car.png");
+    Texture2D boom = LoadTexture("assets/fire.png");
     std::vector<float> laneDeploymentCoords = {140, 220, 300, 380, 460};
     float playerCarX = laneDeploymentCoords.at(2) - playerCarTexture.width / 2;
     float playerCarY = screenHeight - playerCarTexture.height;
@@ -253,21 +267,24 @@ int main()
         DrawTextureRec(leftGrassTexture, lefttGrassContainer, (Vector2){screenWidth - grass_border_width, leftGrassYOffsets[0]}, WHITE);
         DrawTextureRec(leftGrassTexture, lefttGrassContainer2, (Vector2){screenWidth - grass_border_width, leftGrassYOffsets[1]}, WHITE);
         // Move grass left
-        if (leftGrassYOffsets[0] < 800)
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            leftGrassYOffsets[0] += roadLineYOffset * deltaTime;
-        }
-        else
-        {
-            leftGrassYOffsets[0] = leftGrassYOffsets[1] - screenHeight + 2;
-        }
-        if (leftGrassYOffsets[1] < 800)
-        {
-            leftGrassYOffsets[1] += roadLineYOffset * deltaTime;
-        }
-        else
-        {
-            leftGrassYOffsets[1] = leftGrassYOffsets[0] - screenHeight + 2;
+            if (leftGrassYOffsets[0] < 800)
+            {
+                leftGrassYOffsets[0] += roadLineYOffset * deltaTime;
+            }
+            else
+            {
+                leftGrassYOffsets[0] = leftGrassYOffsets[1] - screenHeight + 2;
+            }
+            if (leftGrassYOffsets[1] < 800)
+            {
+                leftGrassYOffsets[1] += roadLineYOffset * deltaTime;
+            }
+            else
+            {
+                leftGrassYOffsets[1] = leftGrassYOffsets[0] - screenHeight + 2;
+            }
         }
 
         // Drawing Roadside Objects on Grass
@@ -279,9 +296,12 @@ int main()
         }
 
         // Now move those roadside objects
-        for (auto i = 0; i < num_RoadSideObjPerFrame; i++)
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            randomYOffsetsForRoadSideObject[i] += (roadLineYOffset * deltaTime);
+            for (auto i = 0; i < num_RoadSideObjPerFrame; i++)
+            {
+                randomYOffsetsForRoadSideObject[i] += (roadLineYOffset * deltaTime);
+            }
         }
         // Shift
         for (auto i = 0; i < num_RoadSideObjPerFrame; i++)
@@ -318,9 +338,12 @@ int main()
         }
 
         // Move right side objects
-        for (auto i = 0; i < num_RoadSideObjPerFrame; i++)
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            randomYOffsetsForRoadSideObjectRight[i] += (roadLineYOffset * deltaTime);
+            for (auto i = 0; i < num_RoadSideObjPerFrame; i++)
+            {
+                randomYOffsetsForRoadSideObjectRight[i] += (roadLineYOffset * deltaTime);
+            }
         }
         // Shift right, same algo as left side. check left side ^
         for (auto i = 0; i < num_RoadSideObjPerFrame; i++)
@@ -335,9 +358,12 @@ int main()
         }
 
         // Move Road lines up
-        for (int i = 0; i < num_RoadLines; i++)
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            roadLineYCoords[i] += (roadLineYOffset * deltaTime);
+            for (int i = 0; i < num_RoadLines; i++)
+            {
+                roadLineYCoords[i] += (roadLineYOffset * deltaTime);
+            }
         }
         // Shifting the valus
         for (int i = 0; i < num_RoadLines; i++)
@@ -362,9 +388,12 @@ int main()
             DrawTexture(textureFench, grass_border_width, fenchYOffsets.at(i), WHITE);
         }
         // LEFT: Move those fenches we are gonna use the same algortithm as road lines
-        for (int i = 0; i < num_Fench; i++)
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            fenchYOffsets[i] += (roadLineYOffset * deltaTime);
+            for (int i = 0; i < num_Fench; i++)
+            {
+                fenchYOffsets[i] += (roadLineYOffset * deltaTime);
+            }
         }
         // Shift LEFT
         for (int i = 0; i < num_Fench; i++)
@@ -392,26 +421,29 @@ int main()
         // Drawing The Player Car
         DrawTexture(playerCarTexture, playerCarX, playerCarY, WHITE);
         // Player car movement
-        // Check if the left arrow key has been pressed
-        // Left movement
-        if (IsKeyDown(KEY_LEFT) && playerCarX > thresholdOffsets[0][0])
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            playerCarX -= roadLineYOffset * deltaTime;
-        }
-        // Right
-        if (IsKeyDown(KEY_RIGHT) && playerCarX < thresholdOffsets[0][1])
-        {
-            playerCarX += roadLineYOffset * deltaTime;
-        }
-        // Up
-        if (IsKeyDown(KEY_UP) && playerCarY > thresholdOffsets[1][0])
-        {
-            playerCarY -= roadLineYOffset * deltaTime;
-        }
-        // Down
-        if (IsKeyDown(KEY_DOWN) && playerCarY < thresholdOffsets[1][1])
-        {
-            playerCarY += roadLineYOffset * deltaTime;
+            // Check if the left arrow key has been pressed
+            // Left movement
+            if (IsKeyDown(KEY_LEFT) && playerCarX > thresholdOffsets[0][0])
+            {
+                playerCarX -= roadLineYOffset * deltaTime;
+            }
+            // Right
+            if (IsKeyDown(KEY_RIGHT) && playerCarX < thresholdOffsets[0][1])
+            {
+                playerCarX += roadLineYOffset * deltaTime;
+            }
+            // Up
+            if (IsKeyDown(KEY_UP) && playerCarY > thresholdOffsets[1][0])
+            {
+                playerCarY -= roadLineYOffset * deltaTime;
+            }
+            // Down
+            if (IsKeyDown(KEY_DOWN) && playerCarY < thresholdOffsets[1][1])
+            {
+                playerCarY += roadLineYOffset * deltaTime;
+            }
         }
 
         // Enemy Deployment/Drawing
@@ -426,9 +458,12 @@ int main()
             DrawTexture(enemyCarSprites.at(i), enemyCarX.at(i) - enemyCarSprites.at(i).width / 2, enemyCarYCoors.at(i), WHITE);
         }
         // Move those cars towars +y
-        for (int i = 0; i < enemyCarYCoors.size(); i++)
+        if (!GAME_OVER && !GAME_PAUSED)
         {
-            enemyCarYCoors[i] += roadLineYOffset * deltaTime;
+            for (int i = 0; i < enemyCarYCoors.size(); i++)
+            {
+                enemyCarYCoors[i] += roadLineYOffset * deltaTime;
+            }
         }
         // Shift those cars when they goes outside the screen;
         // Here we are gonna use the same shifting algorithm as roadside objects
@@ -447,6 +482,19 @@ int main()
                 enemyCarSprites[i] = getRandomSprite(enemeyCars);
             }
         }
+        // Check collision
+        for (int i = 0; i < enemyCarYCoors.size(); i++)
+        {
+            Rectangle enemyCarPixelPerfectTexture = GetTextureCollisionRect(enemyCarSprites.at(i), (Vector2){enemyCarX.at(i), enemyCarYCoors.at(i)});
+            Rectangle playerCarPixelPerfectTexture = GetTextureCollisionRect(playerCarTexture, (Vector2){playerCarX, playerCarY});
+            if (CheckCollisionRecs(enemyCarPixelPerfectTexture, playerCarPixelPerfectTexture))
+            {
+                float collisionX = std::max(enemyCarPixelPerfectTexture.x, playerCarPixelPerfectTexture.x);
+                float collisionY = std::max(enemyCarPixelPerfectTexture.y, playerCarPixelPerfectTexture.y);
+                DrawTexture(boom, collisionX, collisionY - boom.height, WHITE);
+                GAME_OVER = true;
+            }
+        }
 
         EndDrawing();
     }
@@ -456,6 +504,7 @@ int main()
     UnloadTexture(rightGrassTexture);
     UnloadTexture(textureFench);
     UnloadTexture(playerCarTexture);
+    UnloadTexture(boom);
     // De-Initialization
     CloseWindow();
 
