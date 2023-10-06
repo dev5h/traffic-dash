@@ -230,7 +230,6 @@ int main()
     for (int i = 0; i < num_RoadLines; i++)
     {
         fenchYOffsets.push_back(screenHeight - (i * textureFench.height * 1));
-        std::cout << textureFench.height << std::endl;
     }
 
     // alloted coordinates for the roadside objects
@@ -252,7 +251,7 @@ int main()
     {
         float rnd = getRandomFloat(1, 1.5);
         randomYOffsetsForRoadSideObject.push_back(screenHeight - (rnd * i * 5 * i));
-        std::cout << rnd << "\t";
+
         roadSideGeneratedObjectList.push_back(getRandomSprite(roadSideAllotedObjectArray));
     }
     // Doing the same for right side footpath
@@ -264,7 +263,7 @@ int main()
     {
         float rnd = getRandomFloat(1, 1.5);
         randomYOffsetsForRoadSideObjectRight.push_back(screenHeight - (rnd * i * 5 * i));
-        std::cout << rnd << "\t";
+
         roadSideGeneratedObjectListRight.push_back(getRandomSprite(roadSideAllotedObjectArray));
     }
 
@@ -276,6 +275,7 @@ int main()
     {
         // Main game loop
         // Calculating delta
+        std::cout << GAME_OVER << std::endl;
         float newTime = GetTime();
         deltaTime = newTime - currentTime;
         currentTime = newTime;
@@ -529,10 +529,9 @@ int main()
         if (GAME_PAUSED)
         {
             // Draw a text to display paused
-            const char *message = "Paused";
             int fontSize = 40;
-            int textWidth = MeasureText(message, fontSize); // Measure the text width
-            int textHeight = fontSize;                      // Assuming single-line text
+            int textWidth = MeasureText("PAUSED", fontSize); // Measure the text width
+            int textHeight = fontSize;                       // Assuming single-line text
             // Calculate the position to center the text both horizontally and vertically
             int x = (screenWidth - textWidth) / 2;
             int y = (screenHeight - textHeight) / 2;
@@ -567,6 +566,44 @@ int main()
         std::string cppstring = "Score: " + std::to_string(score);
         char *scoreDsp = &cppstring[0];
         DrawText(scoreDsp, grass_border_width / 2 - MeasureText(scoreDsp, 12) / 2, 5 + scoreBoard.height / 2 - 12 / 2, 14, (Color){58, 21, 0, 255});
+        if (GAME_OVER)
+        {
+            // Add an overlay
+            DrawRectangle(0, 0, screenWidth, screenHeight, (Color){0, 0, 0, 190});
+            // Draw a text to display paused
+            int fontSize = 50;
+            int textWidth = MeasureText("GAME OVER", fontSize); // Measure the text width
+            int textHeight = fontSize;                          // Assuming single-line text
+            // Calculate the position to center the text both horizontally and vertically
+            int x = (screenWidth - textWidth) / 2;
+            int y = (screenHeight - textHeight) / 2;
+            Color textColor = WHITE;
+            DrawText("GAME OVER", x, y, fontSize, textColor);
+            std::string scoreStd = "Final Score: " + std::to_string(score);
+            char *scoreC = &scoreStd[0];
+            DrawText(scoreC, (screenWidth - MeasureText(scoreC, 25)) / 2, y + 50, 25, WHITE);
+            DrawText("Press \'R\': Restart - \'X\': Exit Game", (screenWidth - MeasureText("Press R: Restart - X: Exit Game", 25)) / 2, y + 50 * 2, 25, WHITE);
+            // Restart Game
+            if (IsKeyPressed(KEY_R))
+            {
+
+                // enemyCarYCoors = generateRandomFloatsWithMinDifference(-800, screenHeight / 2, 90, num_EnemyCar);
+                for (auto i = 0; i < enemyCarYCoors.size(); i++)
+                {
+                    enemyCarYCoors[i] -= 500.00f;
+                }
+                playerCarX = laneDeploymentCoords.at(2) - playerCarTexture.width / 2;
+                GAME_OVER = false;
+                score = 0;
+                GAME_PAUSED = false;
+            }
+            // Close game
+            if (IsKeyPressed(KEY_X))
+            {
+                CloseWindow();
+            }
+        }
+
         EndDrawing();
     }
 
